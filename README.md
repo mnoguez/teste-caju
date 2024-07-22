@@ -15,6 +15,7 @@ Requisitos do projeto:
 - H2 Database 2.2.224
 - Lombok 1.18.32
 - SLF4J 2.0.13
+- SpringDoc OpenAPI Starter WebMVC UI 2.6.0
 
 Para compilar o projeto rodando os casos de teste e inicializar a aplicação:
 
@@ -22,6 +23,10 @@ Para compilar o projeto rodando os casos de teste e inicializar a aplicação:
 mvn clean package
 mvn spring-boot:run
 ```
+
+URL para acessar a documentação OpenAPI:
+
+`http://localhost:8080/swagger-ui/index.html`
 
 Escolhi utilizar um padrão MVC para o aplicativo web e busquei estruturar o problema com diferentes entidades,
 que em resumo representam a transação atráves da classe `Transaction` e os usuários `Merchant` e `User` para representar 
