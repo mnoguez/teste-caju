@@ -18,9 +18,11 @@ import java.util.Map;
 @AllArgsConstructor
 public class User extends Account {
     @ElementCollection
-    @MapKeyColumn
-    @CollectionTable
-    private Map<MCCType, BigDecimal> wallet;
+    @CollectionTable(name = "user_wallet", joinColumns = @JoinColumn(name = "user_id"))
+    @MapKeyColumn(name = "mcc")
+    @Column(name = "amount")
+    @MapKeyEnumerated(EnumType.STRING)
+    private Map<MCCType, BigDecimal> wallet = new HashMap<>();
 
     public User(String id, String name, HashMap<MCCType, BigDecimal> wallet) {
         super(id, name);

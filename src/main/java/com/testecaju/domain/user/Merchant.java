@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Merchant extends Account {
+    @Enumerated(EnumType.STRING)
     private MCCType mcc;
     private BigDecimal wallet;
 

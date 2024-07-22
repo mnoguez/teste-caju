@@ -21,6 +21,7 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private BigDecimal amount;
+    @Enumerated(EnumType.STRING)
     private MCCType mcc;
     @ManyToOne
     @JoinColumn(name = "user_id")
@@ -29,4 +30,9 @@ public class Transaction {
     @JoinColumn(name = "merchant_id")
     private Merchant merchant;
     private LocalDateTime timestamp;
+
+    @PrePersist
+    protected void onCreate() {
+        this.timestamp = LocalDateTime.now();
+    }
 }
