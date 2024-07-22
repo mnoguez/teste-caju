@@ -6,11 +6,29 @@ Para a implementação do [autorizador](https://caju.notion.site/Desafio-T-cnico
 escolhi utilizar Java Spring como linguagem e framework junto com o banco de dados H2 em memória, apenas como facilitador 
 dos testes unitários e do teste em geral.
 
-Escolhi utilizar uma padrão MVC para o aplicativo web e busquei estruturar o problema com diferentes entidades,
-que em resumo representam a transação atráves da classe `Transaction` e os usuários `Merchant` e `User`. Para representar 
-os diferentes saldos para cada categoria de MCC disponível para o usuário, criei um enum `MCCType` que é utilizado 
-junto do dicionário `wallet` no usuário. Apesar de ambos lojista e usuário comum terem diferenças, utilizei nos dois uma 
-mesma classe pai `Account` por entender que ambos pudessem ter campos em comum, apesar de não ser necessário para o 
+Requisitos do projeto:
+
+- Java 17
+- Maven 3.9.8
+- Java Spring 3.3.1
+- Hibernate 6.1.10
+- H2 Database 2.2.224
+- Lombok 1.18.32
+- SLF4J 2.0.13
+
+Para compilar o projeto rodando os casos de teste e inicializar a aplicação:
+
+```ssh
+mvn clean package
+mvn spring-boot:run
+```
+
+Escolhi utilizar um padrão MVC para o aplicativo web e busquei estruturar o problema com diferentes entidades,
+que em resumo representam a transação atráves da classe `Transaction` e os usuários `Merchant` e `User` para representar 
+ambos os lados da transação, apesar de acreditar não ser necessária a representação do lado do lojista no desafio técnico. 
+Para representar os diferentes saldos para cada categoria de MCC disponível para o usuário, criei um enum `MCCType` que 
+é utilizado junto do dicionário `wallet` no usuário. Apesar de ambos lojista e usuário comum terem diferenças, utilizei nos dois uma 
+mesma classe pai `Account`, por entender que ambos pudessem ter campos em comum, apesar de não ser necessário para o 
 desafio em si. Já a entidade `Transaction`, mesmo não sendo requisito do desafio, utilizei para manter o histórico de 
 transações. Também mapeei o payload para autorização de transação na classe `TransactionDTO` para facilitar a validação 
 do JSON recebido a cada requisição para o endpoint.
