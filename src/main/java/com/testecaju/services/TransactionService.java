@@ -105,7 +105,9 @@ public class TransactionService {
             MCCType transactionMCC = this.searchMCC(transactionPayload.merchant(), transactionPayload.mcc());
 
             // Verify if the wallet contains the balance to discount
+            logger.info("Verifying user balance: {}", transactionPayload.account());
             BigDecimal currentBalance = user.getWallet().getOrDefault(transactionMCC, BigDecimal.ZERO);
+            logger.info("Wallet balance for {} : {}", transactionMCC, currentBalance);
             if (currentBalance.compareTo(transactionPayload.totalAmount()) >= 0){
                 this.finishTransaction(user, transactionMCC, merchant, transactionPayload, false);
                 return "00";
@@ -113,7 +115,7 @@ public class TransactionService {
             // Verify fallback cash wallet has enough remaining balance
             else if (transactionMCC.equals(MCCType.FOOD) || transactionMCC.equals(MCCType.MEAL)){
                 BigDecimal cashBalance = user.getWallet().getOrDefault(MCCType.CASH, BigDecimal.ZERO);
-
+                logger.info("Insufficient balance, verifying CASH: {}", cashBalance);
                 if (currentBalance.add(cashBalance).compareTo(transactionPayload.totalAmount()) >= 0){
                     this.finishTransaction(user, transactionMCC, merchant, transactionPayload, true);
                     return "00";
