@@ -46,10 +46,10 @@ public class TransactionController {
     }
 
     @ExceptionHandler
-    public ResponseEntity<Map<String, String>> handleMissingRequestBody(HttpMessageNotReadableException exception){
+    public ResponseEntity<Map<String, String>> handleMissingRequestBody(HttpMessageNotReadableException exception) {
         logger.error("Missing request body!", exception);
 
-        return new ResponseEntity<>(new HashMap<String, String>(){{
+        return new ResponseEntity<>(new HashMap<String, String>() {{
             put("code", "07"); // Return default message if the request does not contain a body
         }}, HttpStatus.OK);
     }

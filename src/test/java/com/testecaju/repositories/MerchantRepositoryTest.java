@@ -55,7 +55,7 @@ class MerchantRepositoryTest {
         assertThat(result.isEmpty()).isTrue();
     }
 
-    private Merchant createMerchant(String name, MCCType mcc, BigDecimal balance){
+    private Merchant createMerchant(String name, MCCType mcc, BigDecimal balance) {
         Merchant newMerchant = new Merchant();
 
         newMerchant.setName(name);

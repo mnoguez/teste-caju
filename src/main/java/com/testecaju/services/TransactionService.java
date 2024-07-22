@@ -19,7 +19,7 @@ import java.util.Map;
 @Service
 public class TransactionService {
     private static final Logger logger = LoggerFactory.getLogger(TransactionService.class);
-    private static final Map<String, String> merchantNames = new HashMap<>(){{
+    private static final Map<String, String> merchantNames = new HashMap<>() {{
         put("eat", "5811");
         put("padaria", "5411");
         put("super", "5411");
@@ -34,7 +34,7 @@ public class TransactionService {
     @Autowired
     UserService userService;
 
-    private Transaction createTransaction(User user, Merchant merchant, MCCType mcc, BigDecimal amount){
+    private Transaction createTransaction(User user, Merchant merchant, MCCType mcc, BigDecimal amount) {
         // Create new transaction
         Transaction newTransaction = new Transaction();
 
@@ -47,13 +47,13 @@ public class TransactionService {
     }
 
     @Transactional
-    private void saveTransaction(Transaction transaction, User user, Merchant merchant){
+    private void saveTransaction(Transaction transaction, User user, Merchant merchant) {
         this.repository.save(transaction);
         this.userService.saveUser(user);
         this.merchantService.saveMerchant(merchant);
     }
 
-    private void finishTransaction(User user, Merchant merchant, MCCType mcc, BigDecimal currentBalance, BigDecimal amount){
+    private void finishTransaction(User user, Merchant merchant, MCCType mcc, BigDecimal currentBalance, BigDecimal amount) {
         logger.info("Authorizing transaction and updating wallets");
 
         // Update user wallet
@@ -72,11 +72,11 @@ public class TransactionService {
         logger.info("Authorized transaction");
     }
 
-    private MCCType searchMCC(String merchantName, String mcc){
+    private MCCType searchMCC(String merchantName, String mcc) {
         String merchantLowerCase = merchantName.toLowerCase();
 
-        for (Map.Entry<String, String> entry : merchantNames.entrySet()){
-            if (merchantLowerCase.contains(entry.getKey().toLowerCase())){
+        for (Map.Entry<String, String> entry : merchantNames.entrySet()) {
+            if (merchantLowerCase.contains(entry.getKey().toLowerCase())) {
                 logger.info("MCC found in merchant name mapping, using MCC {} to verify balance", entry.getValue());
 
                 return this.getMCC(entry.getValue());
@@ -86,7 +86,7 @@ public class TransactionService {
         return this.getMCC(mcc);
     }
 
-    private MCCType getMCC(String mcc){
+    private MCCType getMCC(String mcc) {
         logger.info("Getting MCC type for MCC {}", mcc);
 
         if (mcc.equals("5411") || mcc.equals("5412"))
@@ -97,25 +97,24 @@ public class TransactionService {
         return MCCType.CASH;
     }
 
-    private String authorizer(User user, Merchant merchant, MCCType transactionMcc, BigDecimal amount){
+    private String authorizer(User user, Merchant merchant, MCCType transactionMcc, BigDecimal amount) {
         BigDecimal balance = user.getWallet().getOrDefault(transactionMcc, BigDecimal.ZERO);
         logger.info("User wallet balance {} : {} : {}", user.getId(), transactionMcc, balance);
 
         // Verify if the MCC wallet contains the balance to discount
-        if (balance.compareTo(amount) >= 0){
+        if (balance.compareTo(amount) >= 0) {
             this.finishTransaction(user, merchant, transactionMcc, balance, amount);
             return "00";
         }
         // Verify fallback cash wallet has enough remaining balance
-        else if (transactionMcc.equals(MCCType.FOOD) || transactionMcc.equals(MCCType.MEAL)){
+        else if (transactionMcc.equals(MCCType.FOOD) || transactionMcc.equals(MCCType.MEAL)) {
             BigDecimal cashBalance = user.getWallet().getOrDefault(MCCType.CASH, BigDecimal.ZERO);
             logger.info("Insufficient balance, verifying CASH: {}", cashBalance);
 
-            if (cashBalance.compareTo(amount) >= 0){
+            if (cashBalance.compareTo(amount) >= 0) {
                 this.finishTransaction(user, merchant, MCCType.CASH, cashBalance, amount);
                 return "00";
-            }
-            else{
+            } else {
                 logger.info("Unauthorized, user with insufficient CASH balance");
                 return "51";
             }

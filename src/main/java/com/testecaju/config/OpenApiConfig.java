@@ -8,10 +8,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OpenApiConfig {
     @Bean
-    public OpenAPI configOpenApi(){
-        return new OpenAPI().info(new Info().description("Implementação do autorizador proposto.")
-                .title("Desafio Técnico Caju")
-                .version("1.0"));
+    public OpenAPI configOpenApi() {
+        return new OpenAPI().info(new Info().description("Implementação do autorizador proposto.").title("Desafio Técnico Caju").version("1.0"));
     }
 
 }

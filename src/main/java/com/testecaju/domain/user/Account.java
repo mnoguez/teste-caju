@@ -1,6 +1,8 @@
 package com.testecaju.domain.user;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 

@@ -11,10 +11,10 @@ public class UserService {
     private UserRepository repository;
 
     public User findUserById(String id) throws Exception {
-        return this.repository.findById(id).orElseThrow(()->new Exception("Usuário não encontrado."));
+        return this.repository.findById(id).orElseThrow(() -> new Exception("Usuário não encontrado."));
     }
 
-    public void saveUser(User user){
+    public void saveUser(User user) {
         this.repository.save(user);
     }
 }

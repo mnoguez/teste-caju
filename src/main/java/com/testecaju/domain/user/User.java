@@ -10,8 +10,8 @@ import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
-@Entity(name="users")
-@Table(name="users")
+@Entity(name = "users")
+@Table(name = "users")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -29,7 +29,7 @@ public class User extends Account {
         this.wallet = wallet;
     }
 
-    public void updateWallet(MCCType mcc, BigDecimal value){
+    public void updateWallet(MCCType mcc, BigDecimal value) {
         wallet.put(mcc, value);
     }
 }

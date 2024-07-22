@@ -11,10 +11,10 @@ public class MerchantService {
     private MerchantRepository repository;
 
     public Merchant findMerchantByNameIgnoreCase(String name) throws Exception {
-        return this.repository.findByNameIgnoreCase(name).orElseThrow(()->new Exception("Lojista não encontrado."));
+        return this.repository.findByNameIgnoreCase(name).orElseThrow(() -> new Exception("Lojista não encontrado."));
     }
 
-    public void saveMerchant(Merchant merchant){
+    public void saveMerchant(Merchant merchant) {
         this.repository.save(merchant);
     }
 }
