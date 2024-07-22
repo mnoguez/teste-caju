@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -36,7 +38,7 @@ public class TransactionController {
                     schema = @Schema(implementation = Map.class),
                     examples = @ExampleObject(value = "{ \"code\": \"00\" }")))
     })
-    public ResponseEntity<Map<String, String>> authorize(@RequestBody TransactionDTO transaction) {
+    public ResponseEntity<Map<String, String>> authorize(@Valid @RequestBody TransactionDTO transaction) {
         HashMap<String, String> map = new HashMap<>();
 
         String code = this.transactionService.authorize(transaction);
@@ -48,6 +50,15 @@ public class TransactionController {
     @ExceptionHandler
     public ResponseEntity<Map<String, String>> handleMissingRequestBody(HttpMessageNotReadableException exception) {
         logger.error("Missing request body!", exception);
+
+        return new ResponseEntity<>(new HashMap<String, String>() {{
+            put("code", "07"); // Return default message if the request does not contain a body
+        }}, HttpStatus.OK);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<Map<String, String>> handleInvalidRequestBody(MethodArgumentNotValidException exception) {
+        logger.error("Invalid request body!", exception);
 
         return new ResponseEntity<>(new HashMap<String, String>() {{
             put("code", "07"); // Return default message if the request does not contain a body
