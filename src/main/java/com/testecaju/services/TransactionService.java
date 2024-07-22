@@ -28,44 +28,46 @@ public class TransactionService {
     }};
 
     @Autowired
-    TransactionRepository transactionRepository;
+    TransactionRepository repository;
     @Autowired
     MerchantService merchantService;
     @Autowired
     UserService userService;
 
-    @Transactional
-    private void finishTransaction(User user, MCCType mcc, Merchant merchant, TransactionDTO transactionPayload, Boolean isFallback) throws Exception{
-        if (!isFallback){
-            // Simple authorizer
-            BigDecimal newBalance = user.getWallet().get(mcc).subtract(transactionPayload.totalAmount());
-            user.updateWallet(mcc, newBalance);
-        }
-        else{
-            // Fallback authorizer
-            BigDecimal currentMccBalance = user.getWallet().get(mcc);
-            BigDecimal diffBalance = transactionPayload.totalAmount().subtract(currentMccBalance);
-            BigDecimal newCashBalance = user.getWallet().get(MCCType.CASH).subtract(diffBalance);
-            user.updateWallet(mcc, new BigDecimal(0));
-            user.updateWallet(MCCType.CASH, newCashBalance);
-
-        }
-        logger.info("Authorizing transaction and updating wallets");
-
-        // Update merchant wallet
-        merchant.setWallet(merchant.getWallet().add(transactionPayload.totalAmount()));
-
+    private Transaction createTransaction(User user, Merchant merchant, MCCType mcc, BigDecimal amount){
         // Create new transaction
         Transaction newTransaction = new Transaction();
-        newTransaction.setAmount(transactionPayload.totalAmount());
+
+        newTransaction.setAmount(amount);
         newTransaction.setUser(user);
         newTransaction.setMcc(mcc);
         newTransaction.setMerchant(merchant);
 
-        // Save updated entities in the database
-        this.transactionRepository.save(newTransaction);
+        return newTransaction;
+    }
+
+    @Transactional
+    private void saveTransaction(Transaction transaction, User user, Merchant merchant){
+        this.repository.save(transaction);
         this.userService.saveUser(user);
         this.merchantService.saveMerchant(merchant);
+    }
+
+    private void finishTransaction(User user, Merchant merchant, MCCType mcc, BigDecimal currentBalance, BigDecimal amount){
+        logger.info("Authorizing transaction and updating wallets");
+
+        // Update user wallet
+        BigDecimal newBalance = currentBalance.subtract(amount);
+        user.updateWallet(mcc, newBalance);
+
+        // Update merchant wallet
+        merchant.setWallet(merchant.getWallet().add(amount));
+
+        // Create new transaction
+        Transaction newTransaction = this.createTransaction(user, merchant, mcc, amount);
+
+        // Save updated entities in the database
+        this.saveTransaction(newTransaction, user, merchant);
 
         logger.info("Authorized transaction");
     }
@@ -95,41 +97,48 @@ public class TransactionService {
         return MCCType.CASH;
     }
 
+    private String authorizer(User user, Merchant merchant, MCCType transactionMcc, BigDecimal amount){
+        BigDecimal balance = user.getWallet().getOrDefault(transactionMcc, BigDecimal.ZERO);
+        logger.info("User wallet balance {} : {} : {}", user.getId(), transactionMcc, balance);
+
+        // Verify if the MCC wallet contains the balance to discount
+        if (balance.compareTo(amount) >= 0){
+            this.finishTransaction(user, merchant, transactionMcc, balance, amount);
+            return "00";
+        }
+        // Verify fallback cash wallet has enough remaining balance
+        else if (transactionMcc.equals(MCCType.FOOD) || transactionMcc.equals(MCCType.MEAL)){
+            BigDecimal cashBalance = user.getWallet().getOrDefault(MCCType.CASH, BigDecimal.ZERO);
+            logger.info("Insufficient balance, verifying CASH: {}", cashBalance);
+
+            if (cashBalance.compareTo(amount) >= 0){
+                this.finishTransaction(user, merchant, MCCType.CASH, cashBalance, amount);
+                return "00";
+            }
+            else{
+                logger.info("Unauthorized, user with insufficient CASH balance");
+                return "51";
+            }
+        }
+        // Reject operation, insufficient balance
+        else {
+            logger.info("Unauthorized, user with insufficient balance for wallet {}", transactionMcc);
+            return "51";
+        }
+    }
+
     public String authorize(TransactionDTO transactionPayload) {
         try {
+            // Get user and merchant
             logger.info("Trying to get user {} and merchant {}, {}", transactionPayload.account(), transactionPayload.merchant(), transactionPayload.mcc());
             User user = this.userService.findUserById(transactionPayload.account());
             Merchant merchant = this.merchantService.findMerchantByNameIgnoreCase(transactionPayload.merchant());
 
             // Get the transaction MCC type
-            MCCType transactionMCC = this.searchMCC(transactionPayload.merchant(), transactionPayload.mcc());
+            MCCType transactionMcc = this.searchMCC(transactionPayload.merchant(), transactionPayload.mcc());
 
-            // Verify if the wallet contains the balance to discount
-            logger.info("Verifying user balance: {}", transactionPayload.account());
-            BigDecimal currentBalance = user.getWallet().getOrDefault(transactionMCC, BigDecimal.ZERO);
-            logger.info("Wallet balance for {} : {}", transactionMCC, currentBalance);
-            if (currentBalance.compareTo(transactionPayload.totalAmount()) >= 0){
-                this.finishTransaction(user, transactionMCC, merchant, transactionPayload, false);
-                return "00";
-            }
-            // Verify fallback cash wallet has enough remaining balance
-            else if (transactionMCC.equals(MCCType.FOOD) || transactionMCC.equals(MCCType.MEAL)){
-                BigDecimal cashBalance = user.getWallet().getOrDefault(MCCType.CASH, BigDecimal.ZERO);
-                logger.info("Insufficient balance, verifying CASH: {}", cashBalance);
-                if (currentBalance.add(cashBalance).compareTo(transactionPayload.totalAmount()) >= 0){
-                    this.finishTransaction(user, transactionMCC, merchant, transactionPayload, true);
-                    return "00";
-                }
-                else{
-                    logger.info("Unauthorized, user with insufficient CASH and {} balance", transactionMCC);
-                    return "51";
-                }
-            }
-            // Reject operation, insufficient balance
-            else {
-                logger.info("Unauthorized, user with insufficient balance for wallet {}", transactionMCC);
-                return "51";
-            }
+            // Run authorizer
+            return this.authorizer(user, merchant, transactionMcc, transactionPayload.totalAmount());
         } catch (Exception e) {
             logger.error("Error updating balance for mcc {} in user account {}", transactionPayload.mcc(), transactionPayload.account(), e);
         }

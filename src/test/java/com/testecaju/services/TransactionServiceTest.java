@@ -76,7 +76,7 @@ class TransactionServiceTest {
 
         User user = new User(userId, "Maria", new HashMap<>() {{
             put(MCCType.MEAL, new BigDecimal(100));
-            put(MCCType.CASH, new BigDecimal(50));
+            put(MCCType.CASH, new BigDecimal(150));
             put(MCCType.FOOD, new BigDecimal(150));
         }});
         Merchant merchant = new Merchant(merchantId, merchantName, MCCType.MEAL, new BigDecimal(150));
