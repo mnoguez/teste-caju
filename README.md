@@ -7,21 +7,39 @@ escolhi utilizar Java Spring como linguagem e framework junto com o banco de dad
 dos testes unitários e do teste em geral.
 
 Escolhi utilizar uma padrão MVC para o aplicativo web e busquei estruturar o problema com diferentes entidades,
-que em resumo representam a transação atráves da classe `Transaction` e os usuários `Merchant` e `User`. Apesar de ambos 
-lojista e usuário comum terem diferenças, utilizei nos dois uma mesma classe pai `Account` por entender que ambos 
-pudessem ter campos em comum, apesar de não ser necessário para o desafio em si. Já a entidade `Transaction`, 
-mesmo não sendo requisito do desafio, utilizei para manter o histórico de transações. Também mapeei o payload para 
-autorização de transação na classe `TransactionDTO` para facilitar a validação do JSON recebido a cada requisição para 
-o endpoint.
+que em resumo representam a transação atráves da classe `Transaction` e os usuários `Merchant` e `User`. Para representar 
+os diferentes saldos para cada categoria de MCC disponível para o usuário, criei um enum `MCCType` que é utilizado 
+junto do dicionário `wallet` no usuário. Apesar de ambos lojista e usuário comum terem diferenças, utilizei nos dois uma 
+mesma classe pai `Account` por entender que ambos pudessem ter campos em comum, apesar de não ser necessário para o 
+desafio em si. Já a entidade `Transaction`, mesmo não sendo requisito do desafio, utilizei para manter o histórico de 
+transações. Também mapeei o payload para autorização de transação na classe `TransactionDTO` para facilitar a validação 
+do JSON recebido a cada requisição para o endpoint.
+
+Para a criação da tabela e seed para dados de teste, criei os scripts SQL `resources/schema.sql` e `resources/data.sql`, 
+não sendo criado CRUD para usuários e lojistas.
 
 ## Problemas L1, L2 E L3
 
 O autorizador simples, com fallback e dependente de comerciante foram implementados juntos na classe de serviço 
-`TransactionService`. Para a implementação do autorizador em geral, a função `TransactionService.authorize()`, 
+`TransactionService`. A classe `TransactionController` é responsável pelo recebimento das requisições atráves do endpoint 
+`/transaction/authorize`. Com usuários e lojistas de teste, o payload segue o exemplo da versão simplificada:
+
+```json
+{
+    "account": "1e0fa047-7f57-41f5-873e-12c31e7c74e4",
+    "totalAmount": 100.00,
+    "mcc": "5800",
+    "merchant": "PADARIA DO ZE               SAO PAULO BR"
+}
+```
+
+
+Para a implementação do autorizador em geral, a função `TransactionService.authorize()`, 
 que utiliza funções auxiliares das classes de serviço `MerchantService` e `UserService` junto de outras funções internas 
 para processar e retornar o código da transação, dependendo da autorização ou não.
 
 Busquei dividir o processo de autorização em:
+
 - Recebe o payload `TransactionDTO`
 - Busca o usuário e o lojista
 - Valida o MCC da transação de acordo com os dados do lojista (L3)
